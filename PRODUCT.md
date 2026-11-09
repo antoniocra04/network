@@ -30,8 +30,9 @@ Not an uptime pinger. It diagnoses the Russian-specific failure modes: regional 
 
 ## Capabilities and Constraints
 
-- Layered checks: Pi itself, home (router), ISP, Russian internet, foreign internet, individual services, protocols.
-- Per-service block classification: DNS substitution, IP block, SNI DPI, ~16 KB cut-off, throttling, geo-refusal by the service itself.
+- Layered checks: Pi itself, home (router), ISP, Russian internet, border restrictions, foreign internet.
+- Per-site block classification: DNS substitution, IP block, SNI DPI, ~16 KB cut-off, throttling, geo-refusal by the site itself.
+- No per-service watchlist (Telegram, ChatGPT and the like): the owner already knows those are blocked; any address can be checked by hand.
 - Verdict in one sentence at the top, incidents with diagnostic snapshots, 24 h timeline, daily availability calendar.
 - On-demand check of any domain with the steps shown as they run.
 - Gaps when the Pi was off are shown as "no data", never as an outage.

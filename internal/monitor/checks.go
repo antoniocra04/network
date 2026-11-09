@@ -18,7 +18,6 @@ type CheckType string
 const (
 	TypePing     CheckType = "ping"
 	TypeSite     CheckType = "site"
-	TypeService  CheckType = "service"
 	TypeThrottle CheckType = "throttle"
 	TypeDNS      CheckType = "dns"
 )
@@ -27,7 +26,6 @@ type Check struct {
 	ID       string
 	Name     string
 	Layer    config.Layer
-	Group    string
 	Type     CheckType
 	Target   string
 	Interval time.Duration
@@ -97,11 +95,6 @@ func (m *Monitor) buildChecks() {
 	for _, s := range m.cfg.Sites {
 		s := s
 		add(&Check{ID: s.ID, Name: s.Name, Layer: s.Layer, Type: TypeSite, Target: s.URL, Interval: iv.Sites,
-			run: func(ctx context.Context) Result { return siteResult(ctx, s.URL, probe.Options{}) }})
-	}
-	for _, s := range m.cfg.Services {
-		s := s
-		add(&Check{ID: s.ID, Name: s.Name, Layer: config.LayerServices, Group: s.Group, Type: TypeService, Target: s.URL, Interval: iv.Services,
 			run: func(ctx context.Context) Result { return siteResult(ctx, s.URL, probe.Options{}) }})
 	}
 	for _, t := range m.cfg.Throttle {

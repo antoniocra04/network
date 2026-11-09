@@ -14,7 +14,6 @@ import (
 type CheckView struct {
 	ID      string
 	Name    string
-	Group   string
 	Target  string
 	Layer   config.Layer
 	Type    CheckType
@@ -26,10 +25,6 @@ type CheckView struct {
 	At      time.Time
 	Since   time.Time
 	Steps   []probe.Step
-	// Services only: departure from the learned usual state.
-	Change      Change
-	Usual       bool // does not open, and that is its usual state
-	ChangeSince time.Time
 }
 
 type LayerView struct {
@@ -52,7 +47,6 @@ type State struct {
 	Since     time.Time
 	Root      config.Layer // where the route first breaks, if anywhere
 	Layers    []LayerView
-	Services  []CheckView
 	Gateway   string
 	ISPHop    string
 	PublicIP  string
@@ -79,12 +73,11 @@ func (s State) layer(l config.Layer) LayerView {
 func (s State) Layer(name string) LayerView { return s.layer(config.Layer(name)) }
 
 var LayerNames = map[config.Layer]string{
-	config.LayerHome:     "Дом",
-	config.LayerISP:      "Провайдер",
-	config.LayerRunet:    "Рунет",
-	config.LayerBorder:   "Граница",
-	config.LayerForeign:  "Зарубеж",
-	config.LayerServices: "Сервисы",
+	config.LayerHome:    "Дом",
+	config.LayerISP:     "Провайдер",
+	config.LayerRunet:   "Рунет",
+	config.LayerBorder:  "Граница",
+	config.LayerForeign: "Зарубеж",
 }
 
 func kindTitle(k string) string {
@@ -123,7 +116,7 @@ func kindTitle(k string) string {
 func KindTitle(k string) string { return kindTitle(k) }
 
 func (m *Monitor) view(c *Check) CheckView {
-	v := CheckView{ID: c.ID, Name: c.Name, Group: c.Group, Target: c.Target, Layer: c.Layer, Type: c.Type}
+	v := CheckView{ID: c.ID, Name: c.Name, Target: c.Target, Layer: c.Layer, Type: c.Type}
 	if r := m.results[c.ID]; r != nil {
 		v.Status, v.Kind, v.Summary, v.Value, v.Loss, v.At, v.Since = r.Status, r.Kind, r.Summary, r.Value, r.Loss, r.At, r.Since
 		if r.Site != nil {
@@ -131,9 +124,6 @@ func (m *Monitor) view(c *Check) CheckView {
 		}
 	} else {
 		v.Summary = "Ещё не проверялся"
-	}
-	if c.Layer == config.LayerServices {
-		v.Change, v.Usual, v.ChangeSince = m.change(c.ID, v.Status)
 	}
 	switch c.ID {
 	case "gateway":
@@ -164,10 +154,6 @@ func (m *Monitor) compute(now time.Time) State {
 	by := map[config.Layer][]CheckView{}
 	for _, c := range m.checks {
 		v := m.view(c)
-		if c.Layer == config.LayerServices {
-			st.Services = append(st.Services, v)
-			continue
-		}
 		by[c.Layer] = append(by[c.Layer], v)
 	}
 	external := false
@@ -184,8 +170,7 @@ func (m *Monitor) compute(now time.Time) State {
 	runet := evalSegment(config.LayerRunet, by[config.LayerRunet])
 	foreign := evalSegment(config.LayerForeign, by[config.LayerForeign])
 	border := evalBorder(by[config.LayerBorder], foreign.Status)
-	services := evalServices(st.Services)
-	st.Layers = []LayerView{home, isp, runet, border, foreign, services}
+	st.Layers = []LayerView{home, isp, runet, border, foreign}
 
 	for i := range st.Layers {
 		l := &st.Layers[i]
@@ -408,45 +393,6 @@ func evalBorder(vs []CheckView, foreign store.Status) LayerView {
 	return l
 }
 
-func evalServices(vs []CheckView) LayerView {
-	l := LayerView{Layer: config.LayerServices}
-	var n, broke, usual int
-	var names []string
-	for _, v := range vs {
-		if v.Status == store.Unknown {
-			continue
-		}
-		n++
-		switch {
-		case v.Change == ChangeBroke:
-			broke++
-			names = append(names, v.Name)
-		case v.Usual:
-			usual++
-		}
-	}
-	switch {
-	case n == 0:
-		l.Status = store.Unknown
-		l.Summary = "нет данных"
-	case broke > 0:
-		l.Status = store.Warn
-		l.Summary = fmt.Sprintf("%d перестали открываться", broke)
-		if broke == 1 {
-			l.Summary = "1 перестал открываться"
-		}
-		l.Detail = "Перестали открываться: " + joinRu(names)
-	case usual > 0:
-		l.Status = store.OK
-		l.Summary = "без изменений"
-		l.Detail = fmt.Sprintf("Открываются %d из %d, остальные заблокированы как обычно", n-usual, n)
-	default:
-		l.Status = store.OK
-		l.Summary = fmt.Sprintf("все %d работают", n)
-	}
-	return l
-}
-
 func (m *Monitor) verdict(st *State, by map[config.Layer][]CheckView) {
 	home, isp := st.layer(config.LayerHome), st.layer(config.LayerISP)
 	runet, foreign := st.layer(config.LayerRunet), st.layer(config.LayerForeign)
@@ -458,16 +404,6 @@ func (m *Monitor) verdict(st *State, by map[config.Layer][]CheckView) {
 	for _, v := range by[config.LayerISP] {
 		if v.ID == "dns-system" {
 			dns = v
-		}
-	}
-	var fresh []CheckView
-	var fixed []string
-	for _, s := range st.Services {
-		switch s.Change {
-		case ChangeBroke:
-			fresh = append(fresh, s)
-		case ChangeFixed:
-			fixed = append(fixed, s.Name)
 		}
 	}
 
@@ -515,27 +451,10 @@ func (m *Monitor) verdict(st *State, by map[config.Layer][]CheckView) {
 		set(config.LayerISP, store.Warn, isp.Since, "Интернет есть, но с потерями у провайдера", isp.Detail+".")
 	case border.Status == store.Warn:
 		set(config.LayerBorder, store.Warn, border.Since, "На выходе за границу есть ограничения", border.Detail+".")
-	case len(fresh) == 1:
-		s := fresh[0]
-		set(config.LayerServices, store.Warn, s.ChangeSince, "Перестал открываться "+s.Name, upper(kindTitle(s.Kind))+". "+s.Summary+".")
-	case len(fresh) > 1:
-		var names []string
-		for _, s := range fresh {
-			names = append(names, s.Name)
-		}
-		set(config.LayerServices, store.Warn, fresh[0].ChangeSince, "Перестали открываться: "+joinRu(names),
-			"Остальной интернет работает. Подробности на вкладке «Сервисы».")
 	default:
 		detail := "Российские и зарубежные сайты открываются."
 		if strings.HasSuffix(runet.Summary, "мс") && strings.HasSuffix(foreign.Summary, "мс") {
 			detail = fmt.Sprintf("Задержка до российских узлов %s, до зарубежных %s.", runet.Summary, foreign.Summary)
-		}
-		switch len(fixed) {
-		case 0:
-		case 1:
-			detail += " Снова открывается " + fixed[0] + "."
-		default:
-			detail += " Снова открываются: " + joinRu(fixed) + "."
 		}
 		set("", store.OK, earliest(home, isp, runet, foreign), "Интернет работает", detail)
 	}

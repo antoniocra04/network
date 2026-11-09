@@ -27,7 +27,7 @@ System sans (`system-ui` stack) for everything; system mono only for addresses, 
 
 - Panel: `--panel`, 1px `--line-soft` border, 10px radius, no shadow.
 - Verdict: panel tinted with the status colour at 10–12% alpha.
-- Route: six layers in a row (3×2 on phones), icon + connector line coloured by status.
+- Route: five layers in a row (3+2 on phones), icon + connector line coloured by status.
 - Check tables: fixed layout, name / summary / value / time; on phones each row becomes a two-line block.
 - Timeline and calendar: flat cells, status fills, grey for "no data".
 - Charts: one fixed log scale (1 ms – 1 s) on every chart, HTML axis labels, loss as ticks on the baseline, native `<title>` tooltips per bucket.

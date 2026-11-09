@@ -48,33 +48,16 @@
       <h2 class="panel-title">Проверки</h2>
       <table class="checks">
         <colgroup><col class="w-name"><col><col class="w-num"><col class="w-when"></colgroup>
-        {{range .S.Layers}}{{if ne .Layer "services"}}
+        {{range .S.Layers}}
         <tbody id="l-{{.Layer}}">
           <tr class="grp"><th colspan="4" scope="rowgroup">{{template "status" .Status}}<span class="grp-name">{{.Name}}</span>{{if .Detail}}<span class="grp-detail">{{.Detail}}</span>{{end}}</th></tr>
           {{range .Checks}}{{template "checkrow" .}}{{end}}
         </tbody>
-        {{end}}{{end}}
+        {{end}}
       </table>
     </section>
 
     <div class="stack">
-      <section class="panel" id="l-services">
-        <h2 class="panel-title">Сервисы <a class="more" href="/services">все</a></h2>
-        {{if .Changes}}
-        <ul class="list">
-          {{range .Changes}}
-          <li>{{icon .Status}}<span class="li-main">{{.Name}}</span>
-            <span class="li-side">{{if eq .Change "broke"}}перестал открываться, {{kindTitle .Kind}}{{else}}снова открывается{{end}}, с {{clock .ChangeSince}}</span></li>
-          {{end}}
-        </ul>
-        {{else if eq (.S.Layer "services").Status 0}}
-        <p class="empty">Сервисы проверяются раз в пару минут, первые результаты скоро.</p>
-        {{else}}
-        <p class="empty">Изменений нет.</p>
-        {{end}}
-        {{if .Usual}}<p class="usual-note">Как обычно не открываются: {{join .Usual ", "}}.</p>{{end}}
-      </section>
-
       <section class="panel">
         <h2 class="panel-title">Инциденты за сутки <a class="more" href="/journal">журнал</a></h2>
         {{if .Incidents}}

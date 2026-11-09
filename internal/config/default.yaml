@@ -1,5 +1,6 @@
 # Default checks. Copy to /data/config.yaml and edit: any list given there
-# replaces the corresponding list below.
+# replaces the corresponding list below. Any site can be checked by hand on
+# the «Проверить сайт» page.
 
 listen: ":8083"
 data_dir: "./data"
@@ -7,7 +8,6 @@ data_dir: "./data"
 intervals:
   ping: 15s
   sites: 60s
-  services: 2m
   throttle: 5m
   public_ip: 5m
   route: 10m
@@ -32,25 +32,6 @@ sites:
   - { id: wikipedia, name: "Wikipedia",  layer: foreign, url: "https://en.wikipedia.org/" }
   - { id: microsoft, name: "Microsoft",  layer: foreign, url: "https://www.microsoft.com/" }
   - { id: apple,     name: "Apple",      layer: foreign, url: "https://www.apple.com/" }
-
-# Individual services. Their problems do not make a segment red.
-services:
-  - { id: youtube,   name: "YouTube",    group: "Видео",       url: "https://www.youtube.com/" }
-  - { id: twitch,    name: "Twitch",     group: "Видео",       url: "https://www.twitch.tv/" }
-  - { id: telegram,  name: "Telegram",   group: "Связь",       url: "https://web.telegram.org/" }
-  - { id: whatsapp,  name: "WhatsApp",   group: "Связь",       url: "https://web.whatsapp.com/" }
-  - { id: discord,   name: "Discord",    group: "Связь",       url: "https://discord.com/" }
-  - { id: signal,    name: "Signal",     group: "Связь",       url: "https://signal.org/" }
-  - { id: instagram, name: "Instagram",  group: "Соцсети",     url: "https://www.instagram.com/" }
-  - { id: facebook,  name: "Facebook",   group: "Соцсети",     url: "https://www.facebook.com/" }
-  - { id: x,         name: "X",          group: "Соцсети",     url: "https://x.com/" }
-  - { id: chatgpt,   name: "ChatGPT",    group: "Нейросети",   url: "https://chatgpt.com/" }
-  - { id: claude,    name: "Claude",     group: "Нейросети",   url: "https://claude.ai/" }
-  - { id: gemini,    name: "Gemini",     group: "Нейросети",   url: "https://gemini.google.com/" }
-  - { id: github,    name: "GitHub",     group: "Разработка",  url: "https://github.com/" }
-  - { id: dockerhub, name: "Docker Hub", group: "Разработка",  url: "https://hub.docker.com/" }
-  - { id: npm,       name: "npm",        group: "Разработка",  url: "https://registry.npmjs.org/" }
-  - { id: steam,     name: "Steam",      group: "Игры",        url: "https://store.steampowered.com/" }
 
 # Large files on foreign hosting. A connection that stalls at ~16 KB is the
 # signature of the cut-off applied to these providers.

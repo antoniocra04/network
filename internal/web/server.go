@@ -37,7 +37,7 @@ type Server struct {
 	pages map[string]*template.Template
 }
 
-var pageNames = []string{"overview", "services", "quality", "journal", "incident", "check"}
+var pageNames = []string{"overview", "quality", "journal", "incident", "check"}
 
 // assetVersion changes whenever the embedded static files change, so
 // long-cached assets are refetched after an update.
@@ -71,7 +71,6 @@ func (s *Server) Handler() http.Handler {
 	static, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", cacheFor(http.FileServerFS(static), 30*24*time.Hour)))
 	mux.HandleFunc("GET /{$}", s.overview)
-	mux.HandleFunc("GET /services", s.services)
 	mux.HandleFunc("GET /quality", s.quality)
 	mux.HandleFunc("GET /journal", s.journal)
 	mux.HandleFunc("GET /journal/{id}", s.incident)
@@ -140,53 +139,12 @@ func (s *Server) overview(w http.ResponseWriter, r *http.Request) {
 	st := s.mon.State()
 	rows, ticks := s.timeline(time.Now())
 	incs, _ := s.store.Incidents(time.Now().Add(-24*time.Hour), 8)
-	var changes []monitor.CheckView
-	var usual []string
-	for _, v := range st.Services {
-		switch {
-		case v.Change != monitor.ChangeNone:
-			changes = append(changes, v)
-		case v.Usual:
-			usual = append(usual, v.Name)
-		}
-	}
 	s.render(w, r, "overview", struct {
 		base
 		Timeline  []tlRow
 		Ticks     []string
 		Incidents []store.Incident
-		Changes   []monitor.CheckView
-		Usual     []string
-	}{base{"overview", "Обзор", st}, rows, ticks, incs, changes, usual})
-}
-
-type svcGroup struct {
-	Name  string
-	Items []monitor.CheckView
-}
-
-func (s *Server) services(w http.ResponseWriter, r *http.Request) {
-	st := s.mon.State()
-	var groups []svcGroup
-	idx := map[string]int{}
-	for _, v := range st.Services {
-		i, ok := idx[v.Group]
-		if !ok {
-			i = len(groups)
-			idx[v.Group] = i
-			groups = append(groups, svcGroup{Name: v.Group})
-		}
-		groups[i].Items = append(groups[i].Items, v)
-	}
-	var segments []monitor.LayerView
-	for _, l := range []string{"runet", "foreign", "border"} {
-		segments = append(segments, st.Layer(l))
-	}
-	s.render(w, r, "services", struct {
-		base
-		Groups   []svcGroup
-		Segments []monitor.LayerView
-	}{base{"services", "Сервисы", st}, groups, segments})
+	}{base{"overview", "Обзор", st}, rows, ticks, incs})
 }
 
 type chartPanel struct {

@@ -17,16 +17,15 @@ var defaultYAML []byte
 type Layer string
 
 const (
-	LayerHome     Layer = "home"
-	LayerISP      Layer = "isp"
-	LayerRunet    Layer = "runet"
-	LayerBorder   Layer = "border"
-	LayerForeign  Layer = "foreign"
-	LayerServices Layer = "services"
+	LayerHome    Layer = "home"
+	LayerISP     Layer = "isp"
+	LayerRunet   Layer = "runet"
+	LayerBorder  Layer = "border"
+	LayerForeign Layer = "foreign"
 )
 
 // Layers in route order.
-var Layers = []Layer{LayerHome, LayerISP, LayerRunet, LayerBorder, LayerForeign, LayerServices}
+var Layers = []Layer{LayerHome, LayerISP, LayerRunet, LayerBorder, LayerForeign}
 
 type Anchor struct {
 	ID    string `yaml:"id"`
@@ -39,7 +38,6 @@ type Site struct {
 	ID    string `yaml:"id"`
 	Name  string `yaml:"name"`
 	Layer Layer  `yaml:"layer"`
-	Group string `yaml:"group"`
 	URL   string `yaml:"url"`
 }
 
@@ -52,7 +50,6 @@ type Throttle struct {
 type Intervals struct {
 	Ping     time.Duration `yaml:"ping"`
 	Sites    time.Duration `yaml:"sites"`
-	Services time.Duration `yaml:"services"`
 	Throttle time.Duration `yaml:"throttle"`
 	PublicIP time.Duration `yaml:"public_ip"`
 	Route    time.Duration `yaml:"route"`
@@ -64,7 +61,6 @@ type Config struct {
 	Intervals Intervals  `yaml:"intervals"`
 	Anchors   []Anchor   `yaml:"anchors"`
 	Sites     []Site     `yaml:"sites"`
-	Services  []Site     `yaml:"services"`
 	Throttle  []Throttle `yaml:"throttle"`
 }
 
@@ -111,7 +107,6 @@ func merge(dst, src *Config) {
 	}
 	setDur(&dst.Intervals.Ping, src.Intervals.Ping)
 	setDur(&dst.Intervals.Sites, src.Intervals.Sites)
-	setDur(&dst.Intervals.Services, src.Intervals.Services)
 	setDur(&dst.Intervals.Throttle, src.Intervals.Throttle)
 	setDur(&dst.Intervals.PublicIP, src.Intervals.PublicIP)
 	setDur(&dst.Intervals.Route, src.Intervals.Route)
@@ -120,9 +115,6 @@ func merge(dst, src *Config) {
 	}
 	if src.Sites != nil {
 		dst.Sites = src.Sites
-	}
-	if src.Services != nil {
-		dst.Services = src.Services
 	}
 	if src.Throttle != nil {
 		dst.Throttle = src.Throttle

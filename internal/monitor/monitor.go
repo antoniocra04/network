@@ -39,7 +39,6 @@ type Monitor struct {
 	layerStatus map[config.Layer]store.Status
 	layerSince  map[config.Layer]time.Time
 	inc         map[string]*incTrack
-	base        map[string]*baseline
 }
 
 type incTrack struct {
@@ -58,7 +57,6 @@ func New(cfg *config.Config, st *store.Store) *Monitor {
 		layerStatus: map[config.Layer]store.Status{},
 		layerSince:  map[config.Layer]time.Time{},
 		inc:         map[string]*incTrack{},
-		base:        map[string]*baseline{},
 	}
 	m.buildChecks()
 	m.started = time.Now()
@@ -162,7 +160,7 @@ func (m *Monitor) Run(ctx context.Context) {
 }
 
 func (m *Monitor) runCheck(ctx context.Context, c *Check) {
-	if c.Type == TypeSite || c.Type == TypeService || c.Type == TypeThrottle {
+	if c.Type == TypeSite || c.Type == TypeThrottle {
 		select {
 		case m.sem <- struct{}{}:
 			defer func() { <-m.sem }()
@@ -188,9 +186,6 @@ func (m *Monitor) runCheck(ctx context.Context, c *Check) {
 		r.Since = prev.Since
 	}
 	m.results[c.ID] = &r
-	if c.Layer == config.LayerServices {
-		m.observe(c.ID, &r)
-	}
 	if r.Status != store.Unknown {
 		m.pending = append(m.pending, store.Sample{TS: r.At, CheckID: c.ID, Status: r.Status, Value: r.Value, Kind: r.Kind})
 	}
@@ -301,15 +296,6 @@ func (m *Monitor) trackIncidents(now time.Time, st State) {
 	// Border problems are their own story even when the route is fine.
 	if b := st.layer(config.LayerBorder); b.Status >= store.Warn && root != config.LayerForeign && st.layer(config.LayerForeign).Status != store.Fail {
 		bad = append(bad, subj{key: "layer:border", layer: "border", title: b.Detail, detail: "", sev: b.Status})
-	}
-	// Services only matter while the foreign segment itself works, and only
-	// when they stop opening; a block that is the usual state is not news.
-	if st.layer(config.LayerForeign).Status != store.Fail && root != config.LayerHome && root != config.LayerISP {
-		for _, s := range st.Services {
-			if s.Change == ChangeBroke {
-				bad = append(bad, subj{key: "svc:" + s.ID, layer: "services", title: s.Name + ": " + kindTitle(s.Kind), detail: s.Summary, sev: s.Status})
-			}
-		}
 	}
 
 	seen := map[string]bool{}
