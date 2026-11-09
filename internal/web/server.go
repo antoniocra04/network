@@ -140,10 +140,14 @@ func (s *Server) overview(w http.ResponseWriter, r *http.Request) {
 	st := s.mon.State()
 	rows, ticks := s.timeline(time.Now())
 	incs, _ := s.store.Incidents(time.Now().Add(-24*time.Hour), 8)
-	var problems []monitor.CheckView
+	var changes []monitor.CheckView
+	var usual []string
 	for _, v := range st.Services {
-		if v.Status >= store.Warn {
-			problems = append(problems, v)
+		switch {
+		case v.Change != monitor.ChangeNone:
+			changes = append(changes, v)
+		case v.Usual:
+			usual = append(usual, v.Name)
 		}
 	}
 	s.render(w, r, "overview", struct {
@@ -151,8 +155,9 @@ func (s *Server) overview(w http.ResponseWriter, r *http.Request) {
 		Timeline  []tlRow
 		Ticks     []string
 		Incidents []store.Incident
-		Problems  []monitor.CheckView
-	}{base{"overview", "Обзор", st}, rows, ticks, incs, problems})
+		Changes   []monitor.CheckView
+		Usual     []string
+	}{base{"overview", "Обзор", st}, rows, ticks, incs, changes, usual})
 }
 
 type svcGroup struct {

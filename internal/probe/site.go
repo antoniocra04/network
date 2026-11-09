@@ -141,14 +141,21 @@ func diagnose(ctx context.Context, raw string, opt Options, depth int) *SiteResu
 	}
 
 	// DNS
-	dctx, cancel := context.WithTimeout(ctx, 4*time.Second)
-	sysIPs, dnsDur, sysErr := LookupSystem(dctx, host)
-	cancel()
+	var sysIPs []net.IP
+	var dnsDur time.Duration
+	var sysErr error
+	if ip := net.ParseIP(host); ip != nil {
+		sysIPs = []net.IP{ip}
+	} else {
+		dctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+		sysIPs, dnsDur, sysErr = LookupSystem(dctx, host)
+		cancel()
+	}
 	r.res.DNSms = ms(dnsDur)
 	var refIPs []net.IP
 	var refVia string
 	var refErr error
-	needRef := sysErr != nil || suspicious(sysIPs)
+	needRef := sysErr != nil || (suspicious(sysIPs) && net.ParseIP(host) == nil)
 	if needRef {
 		rctx, cancel := context.WithTimeout(ctx, 6*time.Second)
 		refIPs, refVia, refErr = LookupReference(rctx, host)
@@ -158,6 +165,8 @@ func diagnose(ctx context.Context, raw string, opt Options, depth int) *SiteResu
 	var dnsKind Kind
 	var dnsNote string
 	switch {
+	case net.ParseIP(host) != nil:
+		r.step("DNS", true, 0, "Адрес указан напрямую, DNS не нужен")
 	case sysErr == nil && !suspicious(sysIPs):
 		r.step("DNS", true, r.res.DNSms, "%s → %s", host, joinIPs(sysIPs))
 	case refErr == nil && len(refIPs) > 0:

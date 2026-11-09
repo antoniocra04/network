@@ -6,7 +6,7 @@
 <div id="svc" class="stack" hx-get="/services?part=svc" hx-trigger="every 30s [document.visibilityState === 'visible']" hx-swap="outerHTML">
   <header class="page-head">
     <h1>Сервисы</h1>
-    <p>Каждый сервис проверяется по шагам: DNS, соединение, TLS, ответ. Причина показывает, на каком шаге он ломается.</p>
+    <p>Каждый сервис проверяется по шагам: DNS, соединение, TLS, ответ. Монитор запоминает обычное состояние сервиса: привычная блокировка показана серым, тревога — только если что-то изменилось.</p>
   </header>
 
   <section class="panel">
@@ -27,12 +27,18 @@
     <h2 class="panel-title">{{.Name}}</h2>
     <div class="svc-list">
       {{range .Items}}
-      <details class="svc">
+      <details class="svc{{if .Usual}} usual{{end}}">
         <summary>
-          <span class="c-name">{{icon .Status}}<span>{{.Name}}</span></span>
-          <span class="svc-kind {{statusClass .Status}}">{{if .At.IsZero}}Ещё не проверялся{{else}}{{cap (kindTitle .Kind)}}{{end}}</span>
+          <span class="c-name">{{svcIcon .}}<span>{{.Name}}</span></span>
+          <span class="svc-kind {{if not .Usual}}{{statusClass .Status}}{{end}}">
+            {{- if .At.IsZero}}Ещё не проверялся
+            {{- else if .Usual}}Как обычно: {{kindTitle .Kind}}
+            {{- else if eq .Change "broke"}}Перестал открываться: {{kindTitle .Kind}}
+            {{- else if eq .Change "fixed"}}Снова открывается
+            {{- else}}{{cap (kindTitle .Kind)}}{{end -}}
+          </span>
           <span class="c-num mono">{{if gt .Value 0.0}}{{ms .Value}}{{end}}</span>
-          <span class="c-when">{{if not .At.IsZero}}{{if bad .Status}}с {{clock .Since}}{{else}}{{since .At}} назад{{end}}{{end}}</span>
+          <span class="c-when">{{if not .At.IsZero}}{{if .Change}}с {{clock .ChangeSince}}{{else if .Usual}}{{else if bad .Status}}с {{clock .Since}}{{else}}{{since .At}} назад{{end}}{{end}}</span>
         </summary>
         <div class="svc-body">
           <p>{{.Summary}}</p>

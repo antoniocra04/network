@@ -60,17 +60,19 @@
     <div class="stack">
       <section class="panel" id="l-services">
         <h2 class="panel-title">Сервисы <a class="more" href="/services">все</a></h2>
-        {{if .Problems}}
+        {{if .Changes}}
         <ul class="list">
-          {{range .Problems}}
-          <li>{{icon .Status}}<span class="li-main">{{.Name}}</span><span class="li-side">{{kindTitle .Kind}}</span></li>
+          {{range .Changes}}
+          <li>{{icon .Status}}<span class="li-main">{{.Name}}</span>
+            <span class="li-side">{{if eq .Change "broke"}}перестал открываться, {{kindTitle .Kind}}{{else}}снова открывается{{end}}, с {{clock .ChangeSince}}</span></li>
           {{end}}
         </ul>
-        {{else if eq (.S.Layer "services").Status 1}}
-        <p class="empty">Все {{len .S.Services}} сервисов открываются.</p>
-        {{else}}
+        {{else if eq (.S.Layer "services").Status 0}}
         <p class="empty">Сервисы проверяются раз в пару минут, первые результаты скоро.</p>
+        {{else}}
+        <p class="empty">Изменений нет.</p>
         {{end}}
+        {{if .Usual}}<p class="usual-note">Как обычно не открываются: {{join .Usual ", "}}.</p>{{end}}
       </section>
 
       <section class="panel">

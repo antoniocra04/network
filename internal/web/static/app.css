@@ -106,6 +106,7 @@ p { margin: 0; }
 .ic-warn { stroke: var(--warn); }
 .ic-fail { stroke: var(--fail); }
 .ic-none { stroke: var(--none); }
+.ic-usual { stroke: var(--faint); }
 .ic-ok circle, .ic-fail circle { fill: currentColor; }
 .ic-ok { color: var(--ok-bg); }
 .ic-fail { color: var(--fail-bg); }
@@ -195,6 +196,8 @@ a.li-main:hover { text-decoration: underline; }
 .svc summary:hover { background: var(--panel-2); }
 .svc-kind { color: var(--muted); }
 .svc-kind.fail { color: var(--fail); } .svc-kind.warn { color: var(--warn); }
+.svc.usual .c-name, .svc.usual .svc-kind { color: var(--faint); }
+.usual-note { color: var(--faint); margin-top: 10px; font-size: 13px; }
 .svc-body { padding: 4px 6px 14px 30px; display: grid; gap: 10px; color: var(--muted); }
 
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }

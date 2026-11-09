@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/antoniocra04/network/internal/monitor"
@@ -109,6 +110,15 @@ func icon(s store.Status) template.HTML {
 	return template.HTML(fmt.Sprintf(open, statusClass(s), body))
 }
 
+// svcIcon draws a service's state; a block that is its usual state gets a
+// quiet neutral mark instead of an alarm.
+func svcIcon(v monitor.CheckView) template.HTML {
+	if v.Usual {
+		return `<svg class="ic ic-usual" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="none"/><path d="M5 8h6" fill="none"/></svg>`
+	}
+	return icon(v.Status)
+}
+
 func ms(v float64) string { return monitor.FmtMs(v) }
 
 var funcs = template.FuncMap{
@@ -118,6 +128,8 @@ var funcs = template.FuncMap{
 	"statusClass": statusClass,
 	"statusWord":  statusWord,
 	"icon":        icon,
+	"svcIcon":     svcIcon,
+	"join":        strings.Join,
 	"ms":          ms,
 	"kindTitle":   monitor.KindTitle,
 	"dateShort":   dateShort,

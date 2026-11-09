@@ -26,6 +26,10 @@ type CheckView struct {
 	At      time.Time
 	Since   time.Time
 	Steps   []probe.Step
+	// Services only: departure from the learned usual state.
+	Change      Change
+	Usual       bool // does not open, and that is its usual state
+	ChangeSince time.Time
 }
 
 type LayerView struct {
@@ -127,6 +131,9 @@ func (m *Monitor) view(c *Check) CheckView {
 		}
 	} else {
 		v.Summary = "Ещё не проверялся"
+	}
+	if c.Layer == config.LayerServices {
+		v.Change, v.Usual, v.ChangeSince = m.change(c.ID, v.Status)
 	}
 	switch c.ID {
 	case "gateway":
@@ -403,26 +410,39 @@ func evalBorder(vs []CheckView, foreign store.Status) LayerView {
 
 func evalServices(vs []CheckView) LayerView {
 	l := LayerView{Layer: config.LayerServices}
-	var n, bad int
+	var n, broke, usual int
+	var names []string
 	for _, v := range vs {
 		if v.Status == store.Unknown {
 			continue
 		}
 		n++
-		if v.Status >= store.Warn {
-			bad++
+		switch {
+		case v.Change == ChangeBroke:
+			broke++
+			names = append(names, v.Name)
+		case v.Usual:
+			usual++
 		}
 	}
 	switch {
 	case n == 0:
 		l.Status = store.Unknown
 		l.Summary = "нет данных"
-	case bad == 0:
+	case broke > 0:
+		l.Status = store.Warn
+		l.Summary = fmt.Sprintf("%d перестали открываться", broke)
+		if broke == 1 {
+			l.Summary = "1 перестал открываться"
+		}
+		l.Detail = "Перестали открываться: " + joinRu(names)
+	case usual > 0:
+		l.Status = store.OK
+		l.Summary = "без изменений"
+		l.Detail = fmt.Sprintf("Открываются %d из %d, остальные заблокированы как обычно", n-usual, n)
+	default:
 		l.Status = store.OK
 		l.Summary = fmt.Sprintf("все %d работают", n)
-	default:
-		l.Status = store.Warn
-		l.Summary = fmt.Sprintf("%d из %d с проблемами", bad, n)
 	}
 	return l
 }
@@ -440,14 +460,14 @@ func (m *Monitor) verdict(st *State, by map[config.Layer][]CheckView) {
 			dns = v
 		}
 	}
-	var blocked []string
 	var fresh []CheckView
+	var fixed []string
 	for _, s := range st.Services {
-		if s.Status == store.Fail {
-			blocked = append(blocked, s.Name)
-			if st.At.Sub(s.Since) < 24*time.Hour && s.Since.After(m.started.Add(5*time.Minute)) {
-				fresh = append(fresh, s)
-			}
+		switch s.Change {
+		case ChangeBroke:
+			fresh = append(fresh, s)
+		case ChangeFixed:
+			fixed = append(fixed, s.Name)
 		}
 	}
 
@@ -497,21 +517,25 @@ func (m *Monitor) verdict(st *State, by map[config.Layer][]CheckView) {
 		set(config.LayerBorder, store.Warn, border.Since, "На выходе за границу есть ограничения", border.Detail+".")
 	case len(fresh) == 1:
 		s := fresh[0]
-		set(config.LayerServices, store.Warn, s.Since, "Перестал открываться "+s.Name, upper(kindTitle(s.Kind))+". "+s.Summary+".")
+		set(config.LayerServices, store.Warn, s.ChangeSince, "Перестал открываться "+s.Name, upper(kindTitle(s.Kind))+". "+s.Summary+".")
 	case len(fresh) > 1:
 		var names []string
 		for _, s := range fresh {
 			names = append(names, s.Name)
 		}
-		set(config.LayerServices, store.Warn, fresh[0].Since, "Перестали открываться: "+joinRu(names),
+		set(config.LayerServices, store.Warn, fresh[0].ChangeSince, "Перестали открываться: "+joinRu(names),
 			"Остальной интернет работает. Подробности на вкладке «Сервисы».")
 	default:
 		detail := "Российские и зарубежные сайты открываются."
 		if strings.HasSuffix(runet.Summary, "мс") && strings.HasSuffix(foreign.Summary, "мс") {
 			detail = fmt.Sprintf("Задержка до российских узлов %s, до зарубежных %s.", runet.Summary, foreign.Summary)
 		}
-		if len(blocked) > 0 {
-			detail += " Не открываются: " + joinRu(blocked) + "."
+		switch len(fixed) {
+		case 0:
+		case 1:
+			detail += " Снова открывается " + fixed[0] + "."
+		default:
+			detail += " Снова открываются: " + joinRu(fixed) + "."
 		}
 		set("", store.OK, earliest(home, isp, runet, foreign), "Интернет работает", detail)
 	}
