@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antoniocra04/svyaz/internal/config"
-	"github.com/antoniocra04/svyaz/internal/monitor"
-	"github.com/antoniocra04/svyaz/internal/probe"
-	"github.com/antoniocra04/svyaz/internal/store"
+	"github.com/antoniocra04/network/internal/config"
+	"github.com/antoniocra04/network/internal/monitor"
+	"github.com/antoniocra04/network/internal/probe"
+	"github.com/antoniocra04/network/internal/store"
 )
 
 //go:embed templates/*.html

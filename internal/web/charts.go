@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antoniocra04/svyaz/internal/store"
+	"github.com/antoniocra04/network/internal/store"
 )
 
 // timelineRow draws one layer's 24 h history as runs of equal status.

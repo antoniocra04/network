@@ -42,7 +42,7 @@ Go + HTMX + SQLite, один контейнер. Страница грузитс
 Нужны Docker и compose-плагин (Raspberry Pi OS 64-bit).
 
 ```bash
-git clone <адрес репозитория> svyaz
+git clone https://github.com/antoniocra04/network.git svyaz
 cd svyaz
 docker compose up -d --build
 ```

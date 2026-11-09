@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/antoniocra04/svyaz/internal/monitor"
-	"github.com/antoniocra04/svyaz/internal/store"
+	"github.com/antoniocra04/network/internal/monitor"
+	"github.com/antoniocra04/network/internal/store"
 )
 
 var months = []string{"янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"}

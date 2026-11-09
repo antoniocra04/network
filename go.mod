@@ -1,4 +1,4 @@
-module github.com/antoniocra04/svyaz
+module github.com/antoniocra04/network
 
 go 1.27.3
 
