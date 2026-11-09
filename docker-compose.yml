@@ -11,6 +11,6 @@ services:
     cap_add: [NET_RAW]
     environment:
       TZ: Europe/Moscow
-      SVYAZ_LISTEN: ":8080"
+      SVYAZ_LISTEN: ":8083"
     volumes:
       - ./data:/data

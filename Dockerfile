@@ -13,9 +13,9 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=build /out/svyaz /usr/local/bin/svyaz
 ENV SVYAZ_DATA=/data \
     SVYAZ_CONFIG=/data/config.yaml \
-    SVYAZ_LISTEN=:8080
+    SVYAZ_LISTEN=:8083
 VOLUME /data
-EXPOSE 8080
+EXPOSE 8083
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD wget -qO- http://127.0.0.1:${SVYAZ_LISTEN#:}/healthz >/dev/null || exit 1
 # Runs as root inside the container: raw ICMP sockets need CAP_NET_RAW,

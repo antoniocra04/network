@@ -1,7 +1,7 @@
 # Default checks. Copy to /data/config.yaml and edit: any list given there
 # replaces the corresponding list below.
 
-listen: ":8080"
+listen: ":8083"
 data_dir: "./data"
 
 intervals:
