@@ -1,0 +1,39 @@
+{{define "content"}}
+<div class="stack">
+  <header class="page-head row">
+    <div>
+      <h1>Качество связи</h1>
+      <p>Задержка до узлов на одной логарифмической шкале для всех графиков. Отметки у нижнего края — потери пакетов.</p>
+    </div>
+    <nav class="seg" aria-label="Период">
+      {{range .Ranges}}<a href="/quality?range={{.Key}}" {{if eq .Key $.Range}}aria-current="true"{{end}}>{{.Label}}</a>{{end}}
+    </nav>
+  </header>
+
+  {{range .Panels}}
+  <section class="panel">
+    <h2 class="panel-title">{{.Title}}</h2>
+    <p class="panel-note">{{.Note}}</p>
+    {{if .Legend}}
+    <ul class="legend">
+      {{range .Legend}}<li><i class="sw" style="background:{{.Color}}"></i>{{.Name}}</li>{{end}}
+    </ul>
+    {{.SVG}}
+    {{else}}
+    <p class="empty">Нет узлов для этого графика.</p>
+    {{end}}
+  </section>
+  {{end}}
+
+  <section class="panel">
+    <h2 class="panel-title">Граница</h2>
+    <p class="panel-note">Загрузка 128 КБ с зарубежных хостингов и проверка DNS. Обрыв на 14–24 КБ означает ограничение на эти хостинги.</p>
+    <table class="checks">
+      <colgroup><col class="w-name"><col><col class="w-num"><col class="w-when"></colgroup>
+      <tbody>
+        {{range .Throttle}}{{template "checkrow" .}}{{end}}
+      </tbody>
+    </table>
+  </section>
+</div>
+{{end}}

@@ -1,0 +1,16 @@
+services:
+  svyaz:
+    build: .
+    image: svyaz:latest
+    container_name: svyaz
+    restart: unless-stopped
+    # Host networking: the monitor must see the real router, the real ISP
+    # route and the DNS server the rest of the home network uses.
+    network_mode: host
+    cap_drop: [ALL]
+    cap_add: [NET_RAW]
+    environment:
+      TZ: Europe/Moscow
+      SVYAZ_LISTEN: ":8080"
+    volumes:
+      - ./data:/data

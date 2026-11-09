@@ -1,0 +1,22 @@
+{{define "status"}}<span class="st st-{{statusClass .}}">{{icon .}}<span>{{statusWord .}}</span></span>{{end}}
+
+{{define "checkrow"}}
+<tr>
+  <td><div class="c-name">{{icon .Status}}<div class="c-label"><span>{{.Name}}</span>{{if .Target}}<span class="mono dim">{{host .Target}}</span>{{end}}</div></div></td>
+  <td class="c-sum">{{.Summary}}</td>
+  <td class="c-num mono">{{if and (gt .Value 0.0) (ne .Type "throttle")}}{{ms .Value}}{{end}}</td>
+  <td class="c-when">{{if .Since.IsZero}}—{{else}}{{if bad .Status}}с {{clock .Since}}{{else}}{{since .At}} назад{{end}}{{end}}</td>
+</tr>
+{{end}}
+
+{{define "steps"}}
+<ol class="steps">
+  {{range .}}
+  <li class="{{if .OK}}ok{{else}}fail{{end}}">
+    <span class="step-name">{{.Name}}</span>
+    <span class="step-text">{{.Text}}</span>
+    <span class="step-ms mono">{{if gt .Ms 0.0}}{{ms .Ms}}{{end}}</span>
+  </li>
+  {{end}}
+</ol>
+{{end}}

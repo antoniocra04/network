@@ -1,0 +1,41 @@
+{{define "content"}}
+<div class="stack">
+  <p><a class="back" href="/journal">← Журнал</a></p>
+  {{with .Inc}}
+  <section class="verdict v-{{statusClass .Severity}}">
+    <div class="verdict-main">
+      <span class="verdict-icon">{{icon .Severity}}</span>
+      <div>
+        <h1>{{.Title}}</h1>
+        {{if .Detail}}<p>{{.Detail}}</p>{{end}}
+        <p class="verdict-since">{{clock .Started}} — {{if .Open}}продолжается{{else}}{{clock .Ended}}{{end}}, {{incDur .}}</p>
+      </div>
+    </div>
+    <dl class="facts">
+      <div><dt>Где</dt><dd>{{layerName .Layer}}</dd></div>
+      <div><dt>Статус</dt><dd>{{if .Open}}Идёт{{else}}Закрыт {{clock .Ended}}{{end}}</dd></div>
+    </dl>
+  </section>
+  {{end}}
+
+  <section class="panel">
+    <h2 class="panel-title">Что показывали проверки в момент начала</h2>
+    {{if .Items}}
+    <div class="svc-list">
+      {{range .Items}}
+      <details class="svc" {{if and .Steps (bad .Status)}}open{{end}}>
+        <summary>
+          <span class="c-name">{{icon .Status}}<span>{{.Name}}</span></span>
+          <span class="svc-kind">{{.Summary}}</span>
+          <span></span><span class="c-when">{{layerName .Layer}}</span>
+        </summary>
+        {{if .Steps}}<div class="svc-body">{{template "steps" .Steps}}</div>{{end}}
+      </details>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="empty">Снимок не сохранился.</p>
+    {{end}}
+  </section>
+</div>
+{{end}}

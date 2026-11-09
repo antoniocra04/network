@@ -1,0 +1,57 @@
+{{define "content"}}
+<div class="stack">
+  <header class="page-head">
+    <h1>Журнал</h1>
+    <p>Инциденты открываются, когда проблема держится дольше 30 секунд, и закрываются после минуты без неё. Закрытые остаются здесь.</p>
+  </header>
+
+  <section class="panel">
+    <h2 class="panel-title">Последние 13 недель</h2>
+    <div class="cal" role="img" aria-label="Доступность интернета по дням">
+      {{range .Calendar}}<i class="cal-d {{.Class}}" {{if .Title}}title="{{.Title}}"{{end}}></i>{{end}}
+    </div>
+    <ul class="legend">
+      <li><i class="sw ok"></i>Без проблем</li>
+      <li><i class="sw warn"></i>Были перебои</li>
+      <li><i class="sw fail"></i>Интернета не было больше 2% дня</li>
+      <li><i class="sw none"></i>Нет данных</li>
+    </ul>
+  </section>
+
+  {{if .Open}}
+  <section class="panel">
+    <h2 class="panel-title">Идут сейчас</h2>
+    {{template "inctable" .Open}}
+  </section>
+  {{end}}
+
+  <section class="panel">
+    <h2 class="panel-title">Закрытые</h2>
+    {{if .Closed}}{{template "inctable" .Closed}}{{else}}<p class="empty">Закрытых инцидентов пока нет. Они появятся здесь, как только что-нибудь сломается и починится.</p>{{end}}
+  </section>
+
+  {{if .Boots}}
+  <section class="panel">
+    <h2 class="panel-title">Запуски монитора</h2>
+    <p class="panel-note">Если Pi выключалась, между последним замером и запуском данных нет.</p>
+    <ul class="list">{{range .Boots}}<li><span class="li-main">{{clock .}}</span></li>{{end}}</ul>
+  </section>
+  {{end}}
+</div>
+{{end}}
+
+{{define "inctable"}}
+<table class="inc">
+  <thead><tr><th scope="col">Начало</th><th scope="col">Длилось</th><th scope="col">Где</th><th scope="col">Что</th></tr></thead>
+  <tbody>
+    {{range .}}
+    <tr>
+      <td class="mono">{{clock .Started}}</td>
+      <td>{{if .Open}}идёт {{end}}{{incDur .}}</td>
+      <td>{{layerName .Layer}}</td>
+      <td class="c-title"><div class="c-name">{{icon .Severity}}<a href="/journal/{{.ID}}">{{.Title}}</a></div></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

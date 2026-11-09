@@ -1,0 +1,27 @@
+{{define "content"}}
+<div class="stack">
+  <header class="page-head">
+    <h1>Проверить сайт</h1>
+    <p>Вставь адрес, который не открывается. Проверка пройдёт DNS, соединение, TLS и ответ сервера и скажет, где ломается.</p>
+  </header>
+  <form class="probe" action="/check" method="get" hx-boost="false">
+    <label for="d" class="sr">Адрес сайта</label>
+    <input id="d" name="d" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+      placeholder="например, telegram.org" value="{{.Domain}}" required>
+    <button type="submit">Проверить</button>
+  </form>
+  {{if .Domain}}
+  <section class="panel" hx-ext="sse" sse-connect="/check/run?d={{.Domain}}" sse-close="done">
+    <h2 class="panel-title mono">{{.Domain}}</h2>
+    <ol class="steps live" sse-swap="step" hx-swap="beforeend"></ol>
+    <div sse-swap="done"><p class="running"><span class="spinner" aria-hidden="true"></span>Проверяю…</p></div>
+  </section>
+  {{end}}
+</div>
+{{end}}
+
+{{define "check-step"}}<li class="{{if .OK}}ok{{else}}fail{{end}}"><span class="step-name">{{.Name}}</span><span class="step-text">{{.Text}}</span><span class="step-ms mono">{{if gt .Ms 0.0}}{{ms .Ms}}{{end}}</span></li>{{end}}
+
+{{define "check-result"}}<div class="result v-{{statusClass .Status}}">{{icon .Status}}<div><p class="result-head">{{cap (kindTitle (printf "%s" .R.Kind))}}</p><p>{{.R.Text}}.</p>{{if .R.IP}}<p class="dim mono">{{.R.IP}}{{if .R.Status}} · HTTP {{.R.Status}}{{end}} · {{ms .R.TotalMs}}</p>{{end}}</div></div>{{end}}
+
+{{define "check-invalid"}}<div class="result v-fail"><p>Это не похоже на адрес сайта. Нужно что-то вроде <span class="mono">example.com</span>.</p></div>{{end}}

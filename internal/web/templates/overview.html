@@ -1,0 +1,113 @@
+{{define "content"}}
+{{template "live" .}}
+{{template "timeline" .}}
+{{end}}
+
+{{define "live"}}
+<div id="live" class="stack" hx-get="/?part=live" hx-trigger="every 15s [document.visibilityState === 'visible']" hx-swap="outerHTML">
+  {{with .S}}
+  <section class="verdict v-{{statusClass .Severity}}" aria-live="polite">
+    <div class="verdict-main">
+      <span class="verdict-icon">{{icon .Severity}}</span>
+      <div>
+        <h1>{{.Headline}}</h1>
+        <p>{{.Detail}}</p>
+        {{if and (not .Warming) (not .Since.IsZero)}}<p class="verdict-since">Так с {{clock .Since}}, {{since .Since}}</p>{{end}}
+      </div>
+    </div>
+    <dl class="facts">
+      <div><dt>Внешний IP</dt><dd class="mono">{{or .PublicIP "—"}}</dd></div>
+      <div><dt>Провайдер</dt><dd>{{or .ISP "—"}}{{if .ASN}} <span class="dim mono">{{.ASN}}</span>{{end}}</dd></div>
+      {{if and .RuIP .PublicIP}}{{if ne .RuIP .PublicIP}}<div><dt>Для Рунета</dt><dd class="mono">{{.RuIP}} <span class="dim">другой адрес</span></dd></div>{{end}}{{end}}
+      <div><dt>Обновлено</dt><dd>{{.At.Format "15:04:05"}}</dd></div>
+    </dl>
+  </section>
+
+  {{if not .DownSince.IsZero}}{{if gt (.Started.Sub .DownSince).Minutes 2.0}}
+  <p class="note">Монитор не работал с {{clock .DownSince}} до {{clock .Started}}. За это время данных нет.</p>
+  {{end}}{{end}}
+
+  <section class="panel">
+    <h2 class="panel-title">Маршрут</h2>
+    <ol class="route">
+      {{range .Layers}}
+      <li class="hop hop-{{statusClass .Status}}">
+        <a href="#l-{{.Layer}}">
+          <span class="hop-node">{{icon .Status}}</span>
+          <span class="hop-name">{{.Name}}</span>
+          <span class="hop-sum">{{.Summary}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ol>
+  </section>
+  {{end}}
+
+  <div class="cols">
+    <section class="panel">
+      <h2 class="panel-title">Проверки</h2>
+      <table class="checks">
+        <colgroup><col class="w-name"><col><col class="w-num"><col class="w-when"></colgroup>
+        {{range .S.Layers}}{{if ne .Layer "services"}}
+        <tbody id="l-{{.Layer}}">
+          <tr class="grp"><th colspan="4" scope="rowgroup">{{template "status" .Status}}<span class="grp-name">{{.Name}}</span>{{if .Detail}}<span class="grp-detail">{{.Detail}}</span>{{end}}</th></tr>
+          {{range .Checks}}{{template "checkrow" .}}{{end}}
+        </tbody>
+        {{end}}{{end}}
+      </table>
+    </section>
+
+    <div class="stack">
+      <section class="panel" id="l-services">
+        <h2 class="panel-title">Сервисы <a class="more" href="/services">все</a></h2>
+        {{if .Problems}}
+        <ul class="list">
+          {{range .Problems}}
+          <li>{{icon .Status}}<span class="li-main">{{.Name}}</span><span class="li-side">{{kindTitle .Kind}}</span></li>
+          {{end}}
+        </ul>
+        {{else if eq (.S.Layer "services").Status 1}}
+        <p class="empty">Все {{len .S.Services}} сервисов открываются.</p>
+        {{else}}
+        <p class="empty">Сервисы проверяются раз в пару минут, первые результаты скоро.</p>
+        {{end}}
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Инциденты за сутки <a class="more" href="/journal">журнал</a></h2>
+        {{if .Incidents}}
+        <ul class="list">
+          {{range .Incidents}}
+          <li>
+            {{icon .Severity}}
+            <a class="li-main" href="/journal/{{.ID}}">{{.Title}}</a>
+            <span class="li-side">{{if .Open}}идёт {{incDur .}}{{else}}{{clock .Started}}, {{incDur .}}{{end}}</span>
+          </li>
+          {{end}}
+        </ul>
+        {{else}}
+        <p class="empty">За сутки инцидентов не было.</p>
+        {{end}}
+      </section>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "timeline"}}
+<section id="timeline" class="panel" hx-get="/?part=timeline" hx-trigger="every 60s [document.visibilityState === 'visible']" hx-swap="outerHTML">
+  <h2 class="panel-title">Последние 24 часа</h2>
+  <div class="tl">
+    {{range .Timeline}}
+    <div class="tl-line"><span class="tl-name">{{.Name}}</span>{{.SVG}}</div>
+    {{end}}
+    <div class="tl-axis mono" aria-hidden="true"><span></span>{{range .Ticks}}<span>{{.}}</span>{{end}}</div>
+  </div>
+  <ul class="legend">
+    <li><i class="sw ok"></i>Работает</li>
+    <li><i class="sw warn"></i>С перебоями</li>
+    <li><i class="sw fail"></i>Не работает</li>
+    <li><i class="sw none"></i>Нет данных</li>
+  </ul>
+</section>
+{{end}}

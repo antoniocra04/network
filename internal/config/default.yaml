@@ -1,0 +1,61 @@
+# Default checks. Copy to /data/config.yaml and edit: any list given there
+# replaces the corresponding list below.
+
+listen: ":8080"
+data_dir: "./data"
+
+intervals:
+  ping: 15s
+  sites: 60s
+  services: 2m
+  throttle: 5m
+  public_ip: 5m
+  route: 10m
+
+# ICMP targets. The router and the first ISP hop are found automatically.
+anchors:
+  - { id: ya-dns,  name: "Яндекс DNS",   layer: runet,   host: 77.88.8.8 }
+  - { id: ya-dns2, name: "Яндекс DNS 2", layer: runet,   host: 77.88.8.1 }
+  - { id: cf-dns,  name: "Cloudflare",   layer: foreign, host: 1.1.1.1 }
+  - { id: g-dns,   name: "Google DNS",   layer: foreign, host: 8.8.8.8 }
+  - { id: q9,      name: "Quad9",        layer: foreign, host: 9.9.9.9 }
+
+# Sites that define whether a segment works at all.
+sites:
+  - { id: yandex,    name: "Яндекс",     layer: runet,   url: "https://ya.ru/" }
+  - { id: vk,        name: "VK",         layer: runet,   url: "https://vk.com/" }
+  - { id: mailru,    name: "Mail.ru",    layer: runet,   url: "https://mail.ru/" }
+  - { id: gosuslugi, name: "Госуслуги",  layer: runet,   url: "https://www.gosuslugi.ru/" }
+  - { id: ozon,      name: "Ozon",       layer: runet,   url: "https://www.ozon.ru/" }
+  - { id: google,    name: "Google",     layer: foreign, url: "https://www.google.com/" }
+  - { id: cloudflare,name: "Cloudflare", layer: foreign, url: "https://www.cloudflare.com/" }
+  - { id: wikipedia, name: "Wikipedia",  layer: foreign, url: "https://en.wikipedia.org/" }
+  - { id: microsoft, name: "Microsoft",  layer: foreign, url: "https://www.microsoft.com/" }
+  - { id: apple,     name: "Apple",      layer: foreign, url: "https://www.apple.com/" }
+
+# Individual services. Their problems do not make a segment red.
+services:
+  - { id: youtube,   name: "YouTube",    group: "Видео",       url: "https://www.youtube.com/" }
+  - { id: twitch,    name: "Twitch",     group: "Видео",       url: "https://www.twitch.tv/" }
+  - { id: telegram,  name: "Telegram",   group: "Связь",       url: "https://web.telegram.org/" }
+  - { id: whatsapp,  name: "WhatsApp",   group: "Связь",       url: "https://web.whatsapp.com/" }
+  - { id: discord,   name: "Discord",    group: "Связь",       url: "https://discord.com/" }
+  - { id: signal,    name: "Signal",     group: "Связь",       url: "https://signal.org/" }
+  - { id: instagram, name: "Instagram",  group: "Соцсети",     url: "https://www.instagram.com/" }
+  - { id: facebook,  name: "Facebook",   group: "Соцсети",     url: "https://www.facebook.com/" }
+  - { id: x,         name: "X",          group: "Соцсети",     url: "https://x.com/" }
+  - { id: chatgpt,   name: "ChatGPT",    group: "Нейросети",   url: "https://chatgpt.com/" }
+  - { id: claude,    name: "Claude",     group: "Нейросети",   url: "https://claude.ai/" }
+  - { id: gemini,    name: "Gemini",     group: "Нейросети",   url: "https://gemini.google.com/" }
+  - { id: github,    name: "GitHub",     group: "Разработка",  url: "https://github.com/" }
+  - { id: dockerhub, name: "Docker Hub", group: "Разработка",  url: "https://hub.docker.com/" }
+  - { id: npm,       name: "npm",        group: "Разработка",  url: "https://registry.npmjs.org/" }
+  - { id: steam,     name: "Steam",      group: "Игры",        url: "https://store.steampowered.com/" }
+
+# Large files on foreign hosting. A connection that stalls at ~16 KB is the
+# signature of the cut-off applied to these providers.
+throttle:
+  - { id: t-cloudflare, name: "Cloudflare", url: "https://speed.cloudflare.com/__down?bytes=131072" }
+  - { id: t-hetzner,    name: "Hetzner DE", url: "https://fsn1-speed.hetzner.com/100MB.bin" }
+  - { id: t-hetzner-us, name: "Hetzner US", url: "https://ash-speed.hetzner.com/100MB.bin" }
+  - { id: t-ovh,        name: "OVH",        url: "https://proof.ovh.net/files/1Mb.dat" }

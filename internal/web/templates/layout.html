@@ -1,0 +1,45 @@
+{{define "layout"}}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>{{.Title}} · Связь</title>
+<link rel="icon" href="{{asset "favicon.svg"}}" type="image/svg+xml">
+<link rel="stylesheet" href="{{asset "app.css"}}">
+<script src="{{asset "htmx.min.js"}}" defer></script>
+<script src="{{asset "sse.js"}}" defer></script>
+</head>
+<body hx-boost="true">
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/" aria-label="Связь, обзор">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="2.2"/><circle cx="16" cy="10" r="2.2"/><path d="M6.2 10h7.6" /><path d="M10 4.5v11" opacity=".45"/></svg>
+      <span>Связь</span>
+    </a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="/" {{if eq .Page "overview"}}aria-current="page"{{end}}>Обзор</a>
+      <a href="/services" {{if eq .Page "services"}}aria-current="page"{{end}}>Сервисы</a>
+      <a href="/quality" {{if eq .Page "quality"}}aria-current="page"{{end}}>Качество</a>
+      <a href="/journal" {{if eq .Page "journal"}}aria-current="page"{{end}}>Журнал</a>
+      <a href="/check" {{if eq .Page "check"}}aria-current="page"{{end}}>Проверить сайт</a>
+    </nav>
+    {{template "pi" .S}}
+  </aside>
+  <main class="main" id="main">
+    {{template "content" .}}
+  </main>
+</div>
+</body>
+</html>{{end}}
+
+{{define "pi"}}
+<dl class="pi">
+  <div><dt>Монитор</dt><dd class="mono">{{or .Pi.Hostname "—"}}</dd></div>
+  <div><dt>Адрес в сети</dt><dd class="mono">{{or .Pi.LANIP "—"}}</dd></div>
+  {{if .Pi.Uptime}}<div><dt>Без перезагрузки</dt><dd>{{dur .Pi.Uptime}}</dd></div>{{end}}
+  {{if .Pi.TempC}}<div><dt>Температура</dt><dd>{{temp .Pi.TempC}}</dd></div>{{end}}
+  <div><dt>Свободно на диске</dt><dd>{{gb .Pi.DiskFreeGB}}</dd></div>
+  {{if not .Pi.ClockOK}}<p class="pi-warn">Часы Pi сбились. Без батарейки RTC время после отключения питания неверное, история может съехать.</p>{{end}}
+</dl>
+{{end}}
